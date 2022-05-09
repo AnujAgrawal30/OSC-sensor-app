@@ -3,11 +3,11 @@ package org.sensors2.osc.activities;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Point;
-import android.graphics.drawable.GradientDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
@@ -22,17 +22,23 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
+import android.widget.TextView;
 
 import org.sensors2.common.dispatch.DataDispatcher;
 import org.sensors2.common.dispatch.Measurement;
@@ -43,14 +49,15 @@ import org.sensors2.common.sensors.SensorCommunication;
 import org.sensors2.osc.R;
 import org.sensors2.osc.dispatch.OscConfiguration;
 import org.sensors2.osc.dispatch.OscDispatcher;
-import org.sensors2.osc.dispatch.SensorConfiguration;
 import org.sensors2.osc.fragments.MultiTouchFragment;
 import org.sensors2.osc.fragments.SensorFragment;
 import org.sensors2.osc.fragments.StartupFragment;
 import org.sensors2.osc.sensors.Settings;
+import org.w3c.dom.Text;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -61,19 +68,23 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
     private OscDispatcher dispatcher;
     private SensorManager sensorManager;
     private PowerManager.WakeLock wakeLock;
-    private boolean active;
+    private boolean active = true;
     private StartupFragment startupFragment;
 
     private NfcAdapter nfcAdapter;
     private PendingIntent mPendingIntent;
     private NdefMessage mNdefPushMessage;
 
+    private TextView acc_view;
+    private TextView gyro_view;
+    private TextView ori_view;
+
     public Settings getSettings() {
         return this.settings;
     }
 
     @Override
-    @SuppressLint("NewApi")
+//    @SuppressLint("NewApi")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -93,14 +104,22 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
                     "Message from NFC Reader :-)", Locale.ENGLISH, true)});
         }
 
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction transaction = fm.beginTransaction();
-        startupFragment = (StartupFragment) fm.findFragmentByTag("sensorlist");
-        if (startupFragment == null) {
-            startupFragment = new StartupFragment();
-            transaction.add(R.id.container, startupFragment, "sensorlist");
-            transaction.commit();
-        }
+//        FragmentManager fm = getSupportFragmentManager();
+//        FragmentTransaction transaction = fm.beginTransaction();
+//        startupFragment = (StartupFragment) fm.findFragmentByTag("sensorlist");
+//        if (startupFragment == null) {
+//            startupFragment = new StartupFragment();
+//            transaction.add(R.id.container, startupFragment, "sensorlist");
+//            transaction.commit();
+//        }
+    }
+
+    @Override
+    public View onCreateView(View parent, String name, Context context, AttributeSet attrs) {
+        acc_view = findViewById(R.id.acc_textview);
+        gyro_view = findViewById(R.id.gyro_textview);
+        ori_view = findViewById(R.id.ori_textview);
+        return super.onCreateView(parent, name, context, attrs);
     }
 
     public List<Parameters> GetSensors(SensorManager sensorManager) {
@@ -346,7 +365,7 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
         this.loadSettings();
         this.sensorCommunication.onResume();
         if (active && !this.wakeLock.isHeld()) {
-            this.wakeLock.acquire();
+//            this.wakeLock.acquire();
         }
 
         if (nfcAdapter != null) {
@@ -364,7 +383,7 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
         super.onPause();
         this.sensorCommunication.onPause();
         if (this.wakeLock.isHeld()) {
-            this.wakeLock.release();
+//            this.wakeLock.release();
         }
 
         if (nfcAdapter != null) {
@@ -380,6 +399,17 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (active) {
+            Log.d("New measurement", sensorEvent.sensor.getType() + ": " + Arrays.toString(sensorEvent.values));
+            if ((acc_view == null) || (gyro_view == null) || (ori_view == null)) return;
+            if (sensorEvent.sensor.getType() == 1) {
+                acc_view.setText("Accelerometer: " + Arrays.toString(sensorEvent.values));
+            }
+            else if (sensorEvent.sensor.getType() == 3) {
+                ori_view.setText("Orientation: " + Arrays.toString(sensorEvent.values));
+            }
+             else if (sensorEvent.sensor.getType() == 4) {
+                gyro_view.setText("Gyroscope: " + Arrays.toString(sensorEvent.values));
+            }
             this.sensorCommunication.dispatch(sensorEvent);
         }
     }
@@ -393,16 +423,16 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
         if (isChecked) {
             if (!this.wakeLock.isHeld()) {
-                this.wakeLock.acquire();
+//                this.wakeLock.acquire(10*60*1000L /*10 minutes*/);
             }
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             this.setRequestedOrientation(this.getCurrentOrientation());
         } else {
-            this.wakeLock.release();
+//            this.wakeLock.release();
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
-        active = isChecked;
+        active = true;
     }
 
     public List<Parameters> getSensors() {

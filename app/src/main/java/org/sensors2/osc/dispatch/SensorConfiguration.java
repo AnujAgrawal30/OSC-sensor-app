@@ -13,6 +13,7 @@ public class SensorConfiguration {
     private boolean sendDuplicates;
 
     public SensorConfiguration() {
+        this.send = true;
     }
 
     public boolean sendingNeeded(float[] values) {
@@ -33,7 +34,7 @@ public class SensorConfiguration {
     }
 
     public void setSend(boolean send) {
-        this.send = send;
+        this.send = true;
     }
 
     public void setSendDuplicates(boolean sendDuplicates) {

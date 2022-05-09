@@ -28,8 +28,10 @@ public class Parameters extends org.sensors2.common.sensors.Parameters {
             if (addedSensors.contains(sensorType)) {
                 continue;
             }
-            addedSensors.add(sensorType);
-            parameters.add(new org.sensors2.osc.sensors.Parameters(sensor, applicationContext));
+            if ((sensorType == 1) || (sensorType == 3) || (sensorType == 4)) {
+                addedSensors.add(sensorType);
+                parameters.add(new org.sensors2.osc.sensors.Parameters(sensor, applicationContext));
+            }
         }
         // 3: TYPE_ORIENTATION This constant was deprecated in API level 8. use SensorManager.getOrientation() instead.
         // We need 1 (accelerometer) and 2 (magnetic field) to use it.

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -22,6 +23,8 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -38,6 +41,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.sensors2.common.dispatch.DataDispatcher;
@@ -78,6 +83,7 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
     private TextView acc_view;
     private TextView gyro_view;
     private TextView ori_view;
+    private LinearLayout container;
 
     public Settings getSettings() {
         return this.settings;
@@ -119,6 +125,7 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
         acc_view = findViewById(R.id.acc_textview);
         gyro_view = findViewById(R.id.gyro_textview);
         ori_view = findViewById(R.id.ori_textview);
+        container = findViewById(R.id.layout_back);
         return super.onCreateView(parent, name, context, attrs);
     }
 
@@ -396,19 +403,22 @@ public class StartUpActivity extends FragmentActivity implements SensorActivity,
         this.dispatcher.addSensorConfiguration(sensorFragment.getSensorConfiguration());
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (active) {
             Log.d("New measurement", sensorEvent.sensor.getType() + ": " + Arrays.toString(sensorEvent.values));
             if ((acc_view == null) || (gyro_view == null) || (ori_view == null)) return;
-            if (sensorEvent.sensor.getType() == 1) {
-                acc_view.setText("Accelerometer: " + Arrays.toString(sensorEvent.values));
-            }
             else if (sensorEvent.sensor.getType() == 3) {
                 ori_view.setText("Orientation: " + Arrays.toString(sensorEvent.values));
-            }
-             else if (sensorEvent.sensor.getType() == 4) {
-                gyro_view.setText("Gyroscope: " + Arrays.toString(sensorEvent.values));
+                int r = (int) Math.min(255 * (sensorEvent.values[1] + 180) / 360, 255);
+                int g = 255 - r;
+                float a = (float) Math.min((sensorEvent.values[0]) / 360, 1);
+                container.setBackgroundColor(Color.argb(a, r, g, 0));
+//                container.setBackgroundColor(Color.rgb(r, 255, 0));
+//                container.setba
+                acc_view.setText("R value: " + r);
+                gyro_view.setText("G value: " + g);
             }
             this.sensorCommunication.dispatch(sensorEvent);
         }

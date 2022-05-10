@@ -28,7 +28,8 @@ public class Parameters extends org.sensors2.common.sensors.Parameters {
             if (addedSensors.contains(sensorType)) {
                 continue;
             }
-            if ((sensorType == 1) || (sensorType == 3) || (sensorType == 4)) {
+//            if ((sensorType == 1) || (sensorType == 3) || (sensorType == 4)) {
+            if ((sensorType == 3)) {
                 addedSensors.add(sensorType);
                 parameters.add(new org.sensors2.osc.sensors.Parameters(sensor, applicationContext));
             }
